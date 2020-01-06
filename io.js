@@ -1,16 +1,30 @@
-// io.js server created
 var io = require('socket.io')();
 
-// Listen for new connections from clients (socket)
+// object to track player's initials
+var players = {};
+
 io.on('connection', function (socket) {
-    console.log('Client connected to socket.io!');
-    //new code below
-    socket.on('add-circle', function (data) {
-        io.emit('add-circle', data);
+
+    socket.on('register-player', function (initials) {
+      // each socket has a unique id
+      players[socket.id] = initials;
+      io.emit('update-player-list', Object.keys(players).map(id => players[id]));
     });
+
+    socket.on('add-circle', function (data) {
+      io.emit('add-circle', data);
+    });
+
+    socket.on('clear-display', function () {
+      io.emit('clear-display');
+    });
+
+    // when the player disconnects, remove key & notify clients
+    socket.on('disconnect', function () {
+      delete players[socket.id];
+      io.emit('update-player-list', Object.keys(players).map(id => players[id]));
+    });
+
 });
 
-
-// io represents socket.io on the server - let's export it
 module.exports = io;
-
